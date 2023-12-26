@@ -13,4 +13,5 @@ repository = "https://github.com/Axlefublr/loago"
 
 [dependencies]
 clap = { version = "4.4.11", features = ["wrap_help", "derive"] }
+dirs = "5.0.1"
 serde_json = "1.0.108"
