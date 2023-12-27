@@ -10,13 +10,10 @@ pub struct Args {
 
 #[derive(Subcommand)]
 pub enum Action {
-    #[command(visible_alias = "d")]
     Do,
-    #[command(visible_alias = "v")]
     #[command(visible_alias = "list")]
     #[command(visible_alias = "look")]
     View,
-    #[command(visible_alias = "r")]
     #[command(visible_alias = "delete")]
     Remove,
 }
