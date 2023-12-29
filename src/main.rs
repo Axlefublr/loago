@@ -7,6 +7,8 @@ use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 
+use loago::APP_NAME;
+
 mod args;
 
 const DATA_FILE_NAME: &str = "loago.json";
@@ -31,14 +33,14 @@ fn ensure_exists(data_dir: PathBuf, data_file: impl AsRef<Path>) -> io::Result<(
         Ok(mut file) => {
             file.write_all(EMPTY_JSON_FILE_CONTENT)?;
             file.flush()?;
-        }
+        },
         Err(error) => {
             use std::io::ErrorKind::*;
             if let AlreadyExists = error.kind() {
             } else {
                 return Err(error);
             }
-        }
+        },
     };
     Ok(())
 }
