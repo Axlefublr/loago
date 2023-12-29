@@ -20,33 +20,6 @@ impl Tasks {
             self.0.insert(task, now);
         }
     }
-
-    pub fn remove(&mut self, task: &str) { self.0.remove(task); }
-
-    pub fn remove_multiple(&mut self, tasks: &[&str]) {
-        let now = now();
-        for task in tasks {
-            self.0.remove(*task);
-        }
-    }
-
-    pub fn keep(&mut self, task: String) {
-        let mut new_map = HashMap::new();
-        if let Some(timestamp) = self.0.remove(&task) {
-            new_map.insert(task, timestamp);
-        }
-        self.0 = new_map;
-    }
-
-    pub fn keep_multiple<T: ToString>(&mut self, tasks: impl IntoIterator<Item = T>) {
-        let mut new_map = HashMap::new();
-        for task in tasks {
-            if let Some(timestamp) = self.0.remove(&task.to_string()) {
-                new_map.insert(task.to_string(), timestamp);
-            }
-        }
-        self.0 = new_map;
-    }
 }
 
 fn now() -> NaiveDateTime { Utc::now().naive_utc() }
