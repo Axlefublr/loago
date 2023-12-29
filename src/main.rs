@@ -1,4 +1,3 @@
-use loago::APP_NAME;
 use std::error::Error;
 use std::fs;
 use std::fs::OpenOptions;
