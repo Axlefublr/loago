@@ -5,8 +5,6 @@ use chrono::Duration;
 use chrono::NaiveDateTime;
 use chrono::Utc;
 
-pub const APP_NAME: &str = "loago";
-
 pub struct Tasks(HashMap<String, NaiveDateTime>);
 
 impl From<HashMap<String, NaiveDateTime>> for Tasks {
@@ -15,6 +13,16 @@ impl From<HashMap<String, NaiveDateTime>> for Tasks {
     }
 }
 
+/// Expects the NaiveDateTime's Debug implementation's String as the HashMap's
+/// value, which is `%Y-%m-%dT%H:%M:%S%.f`.
+/// The reason for this existing is that deserializing into HashMap<String,
+/// String> is supported by serde.
+/// If we were to use NaiveDateTime immediately though, the only way we could
+/// make it work is by creating a wrapper type to be able to implement the
+/// specific Deserialize traits on it.
+/// Except that then *you* wouldn't be able to add Deserialize
+/// implementations of your own, locking you into a limited set of
+/// possibilities.
 impl TryFrom<HashMap<String, String>> for Tasks {
     type Error = chrono::format::ParseError;
 
@@ -28,6 +36,7 @@ impl TryFrom<HashMap<String, String>> for Tasks {
     }
 }
 
+/// Uses NaiveDateTime's Debug trait's string to produce the value String.
 impl From<Tasks> for HashMap<String, String> {
     fn from(value: Tasks) -> Self {
         value
@@ -39,13 +48,20 @@ impl From<Tasks> for HashMap<String, String> {
 }
 
 impl Tasks {
+    /// Update a task's NaiveDateTime timestamp to that of right now.
+    /// If the given task didn't exist prior, it will be created.
     pub fn update(&mut self, task: impl Into<String>) {
         self.0.insert(task.into(), now());
     }
 
-    pub fn update_multiple(&mut self, tasks: impl IntoIterator<Item = impl Into<String>>) {
+    /// Update multiple tasks' NaiveDateTime timestamps to that of right now.
+    /// If any of the given tasks didn't exist prior, they will be created.
+    pub fn update_multiple(
+        &mut self,
+        tasks: impl IntoIterator<Item = impl Into<String>>,
+    ) {
         let now = now();
-        for task in tasks.into_iter() {
+        for task in tasks {
             self.0.insert(task.into(), now);
         }
     }
@@ -70,7 +86,10 @@ impl Tasks {
         self.0 = map;
     }
 
-    pub fn keep_multiple(&mut self, tasks: impl IntoIterator<Item = impl Into<String>>) {
+    pub fn keep_multiple(
+        &mut self,
+        tasks: impl IntoIterator<Item = impl Into<String>>,
+    ) {
         let mut map = HashMap::new();
         for task in tasks {
             let task = task.into();
@@ -82,15 +101,15 @@ impl Tasks {
         self.0 = map;
     }
 
-    /// Assumes you're checking how long ago the tasks were done compared to *now*.
-    /// The "how long ago" of every task is just the amount of days + the letter d.
-    /// So if you did a task ten days ago, it would show up as `10d`.
+    /// Assumes you're checking how long ago the tasks were done compared to
+    /// *now*.
     pub fn output_days(self) -> OutputTasks {
         self.output(|duration| duration.num_days().to_string())
     }
 
-    /// Assumes you're checking how long ago the tasks were done compared to *now*.
-    /// Convert the chrono::duration::Duration into a String representation of your choosing.
+    /// Assumes you're checking how long ago the tasks were done compared to
+    /// *now*. Convert the chrono::duration::Duration into a String
+    /// representation of your choosing.
     pub fn output<F>(self, to_string: F) -> OutputTasks
     where
         F: Fn(Duration) -> String,
@@ -98,10 +117,14 @@ impl Tasks {
         self.output_when(now(), to_string)
     }
 
-    /// Allows to pass the chrono::naive::NaiveDateTime that will be considered "now".
-    /// "now" is the date and time, compared to which the "how long ago" of tasks is compared to.
-    /// Useful for testing and other applications I'm probably missing, which is why this is public.
-    /// Convert the chrono::duration::Duration into a String representation of your choosing.
+    /// Allows to pass the chrono::naive::NaiveDateTime that will be considered
+    /// "now".
+    /// "now" is the date and time, compared to which the "how long ago" of
+    /// tasks is compared to.
+    /// Useful for testing and other applications I'm probably missing, which is
+    /// why this is public.
+    /// Convert the chrono::duration::Duration into a String representation of
+    /// your choosing.
     pub fn output_when<F>(self, now: NaiveDateTime, to_string: F) -> OutputTasks
     where
         F: Fn(Duration) -> String,
@@ -121,12 +144,15 @@ impl Tasks {
     }
 }
 
-fn now() -> NaiveDateTime {
+/// The abstraction the library uses to mean "now".
+/// The implementation is literally just `chrono::Utc::now().naive_utc()`.
+pub fn now() -> NaiveDateTime {
     Utc::now().naive_utc()
 }
 
 type KeyToDisplay = (String, String);
 
+/// Used to display `Tasks` to the user.
 pub struct OutputTasks(Vec<KeyToDisplay>);
 
 impl fmt::Display for OutputTasks {
@@ -259,9 +285,12 @@ mod tasks {
 
     #[test]
     fn output_display() {
-        let tasks =
-            Tasks::different_days().output_when(december(), |duration| duration.num_days().to_string());
-        let expected = String::from("exercise — 275d\nvacuum   — 303d\ndust     — 334d\n");
+        let tasks = Tasks::different_days()
+            .output_when(december(), |duration| {
+                duration.num_days().to_string()
+            });
+        let expected =
+            String::from("exercise — 275\nvacuum   — 303\ndust     — 334\n");
         let actual = tasks.to_string();
         assert_eq!(expected, actual);
     }

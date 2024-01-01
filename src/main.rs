@@ -11,10 +11,10 @@ use std::path::PathBuf;
 use args::Args;
 use clap::Parser;
 use loago::Tasks;
-use loago::APP_NAME;
 
 mod args;
 
+const APP_NAME: &str = "loago";
 const DATA_FILE_NAME: &str = "loago.json";
 const EMPTY_JSON_FILE_CONTENT: &[u8; 2] = b"{}";
 
@@ -22,12 +22,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let Args { action } = Args::parse();
     let data_dir = app_data_dir()?;
     let path = ensure_exists(data_dir, DATA_FILE_NAME)?;
-    let mut file = OpenOptions::new().read(true).write(true).open(path)?;
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)?;
+    let contents = read(&path)?;
     let data: HashMap<String, String> = serde_json::from_str(&contents)?;
     let tasks = Tasks::try_from(data)?;
-    action.execute(file, tasks);
+    action.execute(
+        OpenOptions::new().write(true).truncate(true).open(path)?,
+        tasks,
+    );
     Ok(())
 }
 
@@ -37,10 +38,17 @@ fn app_data_dir() -> Result<PathBuf, &'static str> {
         .join(APP_NAME))
 }
 
-fn ensure_exists(data_dir: PathBuf, data_file: impl AsRef<Path>) -> Result<PathBuf, io::Error> {
+fn ensure_exists(
+    data_dir: PathBuf,
+    data_file: impl AsRef<Path>,
+) -> Result<PathBuf, io::Error> {
     fs::create_dir_all(&data_dir)?;
     let full_path = data_dir.join(data_file);
-    match OpenOptions::new().write(true).create_new(true).open(&full_path) {
+    match OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&full_path)
+    {
         Ok(mut file) => {
             file.write_all(EMPTY_JSON_FILE_CONTENT)?;
             file.flush()?;
@@ -54,4 +62,11 @@ fn ensure_exists(data_dir: PathBuf, data_file: impl AsRef<Path>) -> Result<PathB
         },
     };
     Ok(full_path)
+}
+
+fn read(path: &Path) -> Result<String, io::Error> {
+    let mut file = OpenOptions::new().read(true).open(path)?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+    Ok(contents)
 }

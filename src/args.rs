@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::Seek;
 use std::io::Write;
 
 use clap::Parser;
@@ -50,7 +49,5 @@ impl Action {
 fn save(tasks: Tasks, mut data_file: File) {
     let map: HashMap<String, String> = tasks.into();
     let json = serde_json::to_string_pretty(&map).unwrap();
-    data_file.set_len(0).unwrap();
-    data_file.rewind().unwrap();
     data_file.write_all(json.as_bytes()).unwrap();
 }
