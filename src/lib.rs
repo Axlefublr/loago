@@ -1,5 +1,3 @@
-use std::borrow::Borrow;
-use std::borrow::BorrowMut;
 use std::collections::HashMap;
 use std::fmt;
 
@@ -56,9 +54,9 @@ impl Tasks {
         self.0.remove(task);
     }
 
-    pub fn remove_multiple(&mut self, tasks: &[&str]) {
+    pub fn remove_multiple(&mut self, tasks: &[impl AsRef<str>]) {
         for task in tasks {
-            self.0.remove(*task);
+            self.0.remove(task.as_ref());
         }
     }
 
