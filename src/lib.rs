@@ -60,6 +60,28 @@ impl Tasks {
         }
     }
 
+    pub fn keep(&mut self, task: impl Into<String>) {
+        let task = task.into();
+        let mut map = HashMap::new();
+        if self.0.contains_key(&task) {
+            let timestamp = self.0[&task];
+            map.insert(task, timestamp);
+        };
+        self.0 = map;
+    }
+
+    pub fn keep_multiple(&mut self, tasks: impl IntoIterator<Item = impl Into<String>>) {
+        let mut map = HashMap::new();
+        for task in tasks {
+            let task = task.into();
+            if self.0.contains_key(&task) {
+                let timestamp = self.0[&task];
+                map.insert(task, timestamp);
+            }
+        }
+        self.0 = map;
+    }
+
     /// Assumes you're checking how long ago the tasks were done compared to *now*.
     /// The "how long ago" of every task is just the amount of days + the letter d.
     /// So if you did a task ten days ago, it would show up as `10d`.
@@ -195,20 +217,35 @@ mod tasks {
     }
 
     #[test]
-    #[should_panic]
     fn remove() {
         let mut tasks = Tasks::same_days();
         tasks.remove("vacuum");
-        let _ = tasks.0["vacuum"];
+        assert!(!tasks.0.contains_key("vacuum"))
     }
 
     #[test]
-    #[should_panic]
     fn remove_multiple() {
         let mut tasks = Tasks::same_days();
         tasks.remove_multiple(&["vacuum", "dust"]);
-        let _ = tasks.0["vacuum"];
-        let _ = tasks.0["dust"];
+        assert!(!tasks.0.contains_key("vacuum"));
+        assert!(!tasks.0.contains_key("dust"));
+    }
+
+    #[test]
+    fn keep() {
+        let mut tasks = Tasks::same_days();
+        tasks.keep("vacuum");
+        assert!(!tasks.0.contains_key("dust"));
+        assert!(tasks.0.contains_key("vacuum"));
+    }
+
+    #[test]
+    fn keep_multiple() {
+        let mut tasks = Tasks::same_days();
+        tasks.keep_multiple(["dust", "vacuum"]);
+        assert!(!tasks.0.contains_key("exercise"));
+        assert!(tasks.0.contains_key("dust"));
+        assert!(tasks.0.contains_key("vacuum"));
     }
 
     #[test]
