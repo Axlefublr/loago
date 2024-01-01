@@ -9,20 +9,26 @@ pub const APP_NAME: &str = "loago";
 pub struct Tasks(HashMap<String, NaiveDateTime>);
 
 impl From<HashMap<String, NaiveDateTime>> for Tasks {
-    fn from(value: HashMap<String, NaiveDateTime>) -> Self { Self(value) }
+    fn from(value: HashMap<String, NaiveDateTime>) -> Self {
+        Self(value)
+    }
 }
 
 impl Tasks {
-    pub fn update(&mut self, task: String) { self.0.insert(task, now()); }
+    pub fn update(&mut self, task: impl Into<String>) {
+        self.0.insert(task.into(), now());
+    }
 
-    pub fn update_multiple(&mut self, tasks: impl IntoIterator<Item = String>) {
+    pub fn update_multiple(&mut self, tasks: impl IntoIterator<Item = impl Into<String>>) {
         let now = now();
         for task in tasks.into_iter() {
-            self.0.insert(task, now);
+            self.0.insert(task.into(), now);
         }
     }
 
-    pub fn output(self) -> OutputTasks { self.output_when(now()) }
+    pub fn output(self) -> OutputTasks {
+        self.output_when(now())
+    }
 
     fn output_when(self, now: NaiveDateTime) -> OutputTasks {
         let mut output: Vec<KeyToDiff> = self
@@ -35,7 +41,9 @@ impl Tasks {
     }
 }
 
-fn now() -> NaiveDateTime { Utc::now().naive_utc() }
+fn now() -> NaiveDateTime {
+    Utc::now().naive_utc()
+}
 
 type KeyToDiff = (String, i64);
 
@@ -76,7 +84,7 @@ mod tasks {
     use crate::Tasks;
 
     impl Tasks {
-        fn dummy() -> Self {
+        fn same_days() -> Self {
             let mut map = HashMap::new();
             let december = december();
             map.insert(String::from("dust"), december);
@@ -110,38 +118,38 @@ mod tasks {
 
     #[test]
     fn update() {
-        let mut test_tasks = Tasks::dummy();
-        test_tasks.update(String::from("dust"));
-        let diff = now() - test_tasks.0["dust"];
-        assert_eq!(diff.num_minutes(), 0);
+        let mut tasks = Tasks::same_days();
+        tasks.update("dust");
+        let dust_ago = now() - tasks.0["dust"];
+        assert_eq!(dust_ago.num_minutes(), 0);
     }
 
     #[test]
     fn update_multiple() {
-        let mut test_tasks = Tasks::dummy();
-        test_tasks.update_multiple(vec![String::from("vacuum"), String::from("dust")]);
-        let diff = now() - test_tasks.0["vacuum"];
-        assert_eq!(diff.num_minutes(), 0);
-        let diff = now() - test_tasks.0["dust"];
-        assert_eq!(diff.num_minutes(), 0);
-        let diff = now() - test_tasks.0["exercise"];
-        assert!(diff.num_days() > 0);
+        let mut tasks = Tasks::same_days();
+        tasks.update_multiple(["vacuum", "dust"]);
+        let vacuum_ago = now() - tasks.0["vacuum"];
+        let dust_ago = now() - tasks.0["dust"];
+        let exercise_ago = now() - tasks.0["exercise"];
+        assert_eq!(vacuum_ago.num_minutes(), 0);
+        assert_eq!(dust_ago.num_minutes(), 0);
+        assert!(exercise_ago.num_days() > 0);
     }
 
     #[test]
     fn output() {
-        let test_tasks = Tasks::dummy().output();
+        let tasks = Tasks::same_days().output();
         let expected_diff = now() - december();
-        for (_, actual_diff) in test_tasks.0 {
+        for (_, actual_diff) in tasks.0 {
             assert_eq!(actual_diff, expected_diff.num_days());
         }
     }
 
     #[test]
     fn output_display() {
-        let test_tasks = Tasks::different_days().output_when(december());
+        let tasks = Tasks::different_days().output_when(december());
         let expected = String::from("exercise — 275\nvacuum   — 303\ndust     — 334\n");
-        let actual = test_tasks.to_string();
+        let actual = tasks.to_string();
         assert_eq!(expected, actual);
     }
 }
