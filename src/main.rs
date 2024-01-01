@@ -1,11 +1,15 @@
+use std::collections::HashMap;
 use std::error::Error;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io;
+use std::io::Read;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 
+use chrono::NaiveDateTime;
+use loago::Tasks;
 use loago::APP_NAME;
 
 mod args;
@@ -15,7 +19,12 @@ const EMPTY_JSON_FILE_CONTENT: &[u8; 2] = b"{}";
 
 fn main() -> Result<(), Box<dyn Error>> {
     let data_dir = app_data_dir()?;
-    ensure_exists(data_dir, DATA_FILE_NAME)?;
+    let path = ensure_exists(data_dir, DATA_FILE_NAME)?;
+    let mut file = OpenOptions::new().read(true).write(true).open(path)?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents);
+    let data: HashMap<String, String> = serde_json::from_str(&contents)?;
+    let tasks = Tasks::try_from(data)?;
     Ok(())
 }
 
@@ -25,7 +34,7 @@ fn app_data_dir() -> Result<PathBuf, &'static str> {
         .join(APP_NAME))
 }
 
-fn ensure_exists(data_dir: PathBuf, data_file: impl AsRef<Path>) -> io::Result<()> {
+fn ensure_exists(data_dir: PathBuf, data_file: impl AsRef<Path>) -> Result<PathBuf, io::Error> {
     fs::create_dir_all(&data_dir)?;
     let full_path = data_dir.join(data_file);
     match OpenOptions::new().write(true).create_new(true).open(full_path) {
@@ -41,5 +50,5 @@ fn ensure_exists(data_dir: PathBuf, data_file: impl AsRef<Path>) -> io::Result<(
             }
         },
     };
-    Ok(())
+    Ok(full_path)
 }

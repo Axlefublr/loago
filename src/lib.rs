@@ -15,6 +15,29 @@ impl From<HashMap<String, NaiveDateTime>> for Tasks {
     }
 }
 
+impl TryFrom<HashMap<String, String>> for Tasks {
+    type Error = chrono::format::ParseError;
+
+    fn try_from(value: HashMap<String, String>) -> Result<Self, Self::Error> {
+        let mut map = HashMap::new();
+        for (key, timestamp) in value {
+            let timestamp = timestamp.parse()?;
+            map.insert(key, timestamp);
+        }
+        Ok(Tasks(map))
+    }
+}
+
+impl From<Tasks> for HashMap<String, String> {
+    fn from(value: Tasks) -> Self {
+        value
+            .0
+            .into_iter()
+            .map(|(key, timestamp)| (key, timestamp.to_string()))
+            .collect()
+    }
+}
+
 impl Tasks {
     pub fn update(&mut self, task: impl Into<String>) {
         self.0.insert(task.into(), now());
