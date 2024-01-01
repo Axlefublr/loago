@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+use std::borrow::BorrowMut;
 use std::collections::HashMap;
 use std::fmt;
 
@@ -47,6 +49,16 @@ impl Tasks {
         let now = now();
         for task in tasks.into_iter() {
             self.0.insert(task.into(), now);
+        }
+    }
+
+    pub fn remove(&mut self, task: &str) {
+        self.0.remove(task);
+    }
+
+    pub fn remove_multiple(&mut self, tasks: &[&str]) {
+        for task in tasks {
+            self.0.remove(*task);
         }
     }
 
@@ -182,6 +194,23 @@ mod tasks {
         assert_eq!(vacuum_ago.num_minutes(), 0);
         assert_eq!(dust_ago.num_minutes(), 0);
         assert!(exercise_ago.num_days() > 0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn remove() {
+        let mut tasks = Tasks::same_days();
+        tasks.remove("vacuum");
+        let _ = tasks.0["vacuum"];
+    }
+
+    #[test]
+    #[should_panic]
+    fn remove_multiple() {
+        let mut tasks = Tasks::same_days();
+        tasks.remove_multiple(&["vacuum", "dust"]);
+        let _ = tasks.0["vacuum"];
+        let _ = tasks.0["dust"];
     }
 
     #[test]
