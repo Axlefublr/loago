@@ -4,7 +4,6 @@ use std::fs;
 use std::fs::OpenOptions;
 use std::io;
 use std::io::Read;
-use std::io::Seek;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
@@ -26,7 +25,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut file = OpenOptions::new().read(true).write(true).open(path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-    file.rewind()?;
     let data: HashMap<String, String> = serde_json::from_str(&contents)?;
     let tasks = Tasks::try_from(data)?;
     action.execute(file, tasks);
