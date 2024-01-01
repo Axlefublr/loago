@@ -10,6 +10,8 @@ pub struct Args {
 
 #[derive(Subcommand)]
 pub enum Action {
+    #[command(visible_alias = "add")]
+    #[command(visible_alias = "new")]
     Do,
     #[command(visible_alias = "list")]
     #[command(visible_alias = "look")]
