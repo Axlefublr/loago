@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fmt;
 
+use chrono::Duration;
 use chrono::NaiveDateTime;
 use chrono::Utc;
 
@@ -26,17 +27,41 @@ impl Tasks {
         }
     }
 
-    pub fn output(self) -> OutputTasks {
-        self.output_when(now())
+    /// Assumes you're checking how long ago the tasks were done compared to *now*.
+    /// The "how long ago" of every task is just the amount of days + the letter d.
+    /// So if you did a task ten days ago, it would show up as `10d`.
+    pub fn output_days(self) -> OutputTasks {
+        self.output(|duration| format!("{}d", duration.num_days()))
     }
 
-    fn output_when(self, now: NaiveDateTime) -> OutputTasks {
-        let mut output: Vec<KeyToDiff> = self
+    /// Assumes you're checking how long ago the tasks were done compared to *now*.
+    /// Convert the chrono::duration::Duration into a String representation of your choosing.
+    pub fn output<F>(self, to_string: F) -> OutputTasks
+    where
+        F: Fn(Duration) -> String,
+    {
+        self.output_when(now(), to_string)
+    }
+
+    /// Allows to pass the chrono::naive::NaiveDateTime that will be considered "now".
+    /// "now" is the date and time, compared to which the "how long ago" of tasks is compared to.
+    /// Useful for testing and other applications I'm probably missing, which is why this is public.
+    /// Convert the chrono::duration::Duration into a String representation of your choosing.
+    pub fn output_when<F>(self, now: NaiveDateTime, to_string: F) -> OutputTasks
+    where
+        F: Fn(Duration) -> String,
+    {
+        type KeyToDuration = (String, Duration);
+        let mut output: Vec<KeyToDuration> = self
             .0
             .into_iter()
-            .map(|(key, timestamp)| (key, (now - timestamp).num_days()))
+            .map(|(key, timestamp)| (key, now - timestamp))
             .collect();
         output.sort_by_key(|(_, diff_days)| *diff_days);
+        let output: Vec<KeyToDisplay> = output
+            .into_iter()
+            .map(|(key, duration)| (key, to_string(duration)))
+            .collect();
         OutputTasks(output)
     }
 }
@@ -45,9 +70,9 @@ fn now() -> NaiveDateTime {
     Utc::now().naive_utc()
 }
 
-type KeyToDiff = (String, i64);
+type KeyToDisplay = (String, String);
 
-pub struct OutputTasks(Vec<KeyToDiff>);
+pub struct OutputTasks(Vec<KeyToDisplay>);
 
 impl fmt::Display for OutputTasks {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -137,18 +162,19 @@ mod tasks {
     }
 
     #[test]
-    fn output() {
-        let tasks = Tasks::same_days().output();
-        let expected_diff = now() - december();
-        for (_, actual_diff) in tasks.0 {
-            assert_eq!(actual_diff, expected_diff.num_days());
+    fn output_days() {
+        let tasks = Tasks::same_days().output_days();
+        let expected = format!("{}d", (now() - december()).num_days());
+        for (_, actual) in tasks.0 {
+            assert_eq!(actual, expected);
         }
     }
 
     #[test]
     fn output_display() {
-        let tasks = Tasks::different_days().output_when(december());
-        let expected = String::from("exercise — 275\nvacuum   — 303\ndust     — 334\n");
+        let tasks =
+            Tasks::different_days().output_when(december(), |duration| format!("{}d", duration.num_days()));
+        let expected = String::from("exercise — 275d\nvacuum   — 303d\ndust     — 334d\n");
         let actual = tasks.to_string();
         assert_eq!(expected, actual);
     }
