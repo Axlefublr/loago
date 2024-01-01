@@ -40,7 +40,7 @@ impl Action {
                 if let Some(provided) = provided {
                     tasks.keep_multiple(provided);
                 }
-                println!("{}", tasks.output_days());
+                print!("{}", tasks.output_days());
             },
         }
     }

@@ -33,7 +33,7 @@ impl From<Tasks> for HashMap<String, String> {
         value
             .0
             .into_iter()
-            .map(|(key, timestamp)| (key, timestamp.to_string()))
+            .map(|(key, timestamp)| (key, format!("{:?}", timestamp)))
             .collect()
     }
 }
@@ -86,7 +86,7 @@ impl Tasks {
     /// The "how long ago" of every task is just the amount of days + the letter d.
     /// So if you did a task ten days ago, it would show up as `10d`.
     pub fn output_days(self) -> OutputTasks {
-        self.output(|duration| format!("{}d", duration.num_days()))
+        self.output(|duration| duration.num_days().to_string())
     }
 
     /// Assumes you're checking how long ago the tasks were done compared to *now*.
@@ -251,7 +251,7 @@ mod tasks {
     #[test]
     fn output_days() {
         let tasks = Tasks::same_days().output_days();
-        let expected = format!("{}d", (now() - december()).num_days());
+        let expected = (now() - december()).num_days().to_string();
         for (_, actual) in tasks.0 {
             assert_eq!(actual, expected);
         }
@@ -260,7 +260,7 @@ mod tasks {
     #[test]
     fn output_display() {
         let tasks =
-            Tasks::different_days().output_when(december(), |duration| format!("{}d", duration.num_days()));
+            Tasks::different_days().output_when(december(), |duration| duration.num_days().to_string());
         let expected = String::from("exercise — 275d\nvacuum   — 303d\ndust     — 334d\n");
         let actual = tasks.to_string();
         assert_eq!(expected, actual);
