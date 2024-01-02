@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::error::Error;
 use std::fs::File;
 use std::io::Write;
 
@@ -26,28 +27,30 @@ pub enum Action {
 }
 
 impl Action {
-    pub fn execute(self, data_file: File, mut tasks: Tasks) {
+    pub fn execute(self, data_file: File, mut tasks: Tasks) -> Result<(), Box<dyn Error>> {
         match self {
             Self::Do { tasks: provided } => {
                 tasks.update_multiple(provided);
-                save(tasks, data_file);
+                save(tasks, data_file)
             },
             Self::Remove { tasks: provided } => {
                 tasks.remove_multiple(&provided);
-                save(tasks, data_file);
+                save(tasks, data_file)
             },
             Self::View { tasks: provided } => {
                 if let Some(provided) = provided {
                     tasks.keep_multiple(provided);
                 }
                 print!("{}", tasks.output_days());
+                Ok(())
             },
         }
     }
 }
 
-fn save(tasks: Tasks, mut data_file: File) {
+fn save(tasks: Tasks, mut data_file: File) -> Result<(), Box<dyn Error>> {
     let map: HashMap<String, String> = tasks.into();
-    let json = serde_json::to_string_pretty(&map).unwrap();
-    data_file.write_all(json.as_bytes()).unwrap();
+    let json = serde_json::to_string_pretty(&map)?;
+    data_file.write_all(json.as_bytes())?;
+    Ok(())
 }

@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     action.execute(
         OpenOptions::new().write(true).truncate(true).open(path)?,
         tasks,
-    );
+    )?;
     Ok(())
 }
 
