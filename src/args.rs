@@ -16,12 +16,16 @@ pub struct Args {
 
 #[derive(Subcommand)]
 pub enum Action {
+    /// Update tasks' dates to now.
+    /// Creates tasks that didn't exist before.
     #[command(visible_alias = "add")]
     #[command(visible_alias = "new")]
     Do { tasks: Vec<String> },
+    /// View all (default) or specified tasks, with how many days ago you last did them.
     #[command(visible_alias = "list")]
     #[command(visible_alias = "look")]
     View { tasks: Option<Vec<String>> },
+    /// Remove specified tasks from the list.
     #[command(visible_alias = "delete")]
     Remove { tasks: Vec<String> },
 }
