@@ -20,10 +20,14 @@ pub enum Action {
     /// Creates tasks that didn't exist before.
     #[command(visible_alias = "add")]
     #[command(visible_alias = "new")]
+    #[command(visible_alias = "update")]
+    #[command(visible_alias = "reset")]
     Do { tasks: Vec<String> },
-    /// View all (default) or specified tasks, with how many days ago you last did them.
+    /// View all (default) or specified tasks, with how many days ago you last
+    /// did them.
     #[command(visible_alias = "list")]
     #[command(visible_alias = "look")]
+    #[command(visible_alias = "see")]
     View { tasks: Option<Vec<String>> },
     /// Remove specified tasks from the list.
     #[command(visible_alias = "delete")]
@@ -31,7 +35,11 @@ pub enum Action {
 }
 
 impl Action {
-    pub fn execute(self, data_file: File, mut tasks: Tasks) -> Result<(), Box<dyn Error>> {
+    pub fn execute(
+        self,
+        data_file: File,
+        mut tasks: Tasks,
+    ) -> Result<(), Box<dyn Error>> {
         match self {
             Self::Do { tasks: provided } => {
                 tasks.update_multiple(provided);
