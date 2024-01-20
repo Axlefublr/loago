@@ -26,7 +26,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let data: HashMap<String, String> = serde_json::from_str(&contents)?;
     let tasks = Tasks::try_from(data)?;
     action.execute(
-        OpenOptions::new().write(true).truncate(true).open(path)?,
+        path,
         tasks,
     )?;
     Ok(())

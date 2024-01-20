@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 use std::error::Error;
-use std::fs::File;
+use std::fs::OpenOptions;
 use std::io::Write;
+use std::path::Path;
 
 use clap::Parser;
 use clap::Subcommand;
@@ -37,17 +38,17 @@ pub enum Action {
 impl Action {
     pub fn execute(
         self,
-        data_file: File,
+        path: impl AsRef<Path>,
         mut tasks: Tasks,
     ) -> Result<(), Box<dyn Error>> {
         match self {
             Self::Do { tasks: provided } => {
                 tasks.update_multiple(provided);
-                save(tasks, data_file)
+                save(tasks, path)
             },
             Self::Remove { tasks: provided } => {
                 tasks.remove_multiple(&provided);
-                save(tasks, data_file)
+                save(tasks, path)
             },
             Self::View { tasks: provided } => {
                 if let Some(provided) = provided {
@@ -60,9 +61,10 @@ impl Action {
     }
 }
 
-fn save(tasks: Tasks, mut data_file: File) -> Result<(), Box<dyn Error>> {
+fn save(tasks: Tasks, path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
     let map: HashMap<String, String> = tasks.into();
     let json = serde_json::to_string_pretty(&map)?;
+    let mut data_file = OpenOptions::new().write(true).truncate(true).open(path)?;
     data_file.write_all(json.as_bytes())?;
     Ok(())
 }
