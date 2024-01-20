@@ -64,7 +64,8 @@ impl Action {
 fn save(tasks: Tasks, path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
     let map: HashMap<String, String> = tasks.into();
     let json = serde_json::to_string_pretty(&map)?;
-    let mut data_file = OpenOptions::new().write(true).truncate(true).open(path)?;
+    let mut data_file =
+        OpenOptions::new().write(true).truncate(true).open(path)?;
     data_file.write_all(json.as_bytes())?;
     Ok(())
 }

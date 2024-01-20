@@ -25,10 +25,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let contents = read(&path)?;
     let data: HashMap<String, String> = serde_json::from_str(&contents)?;
     let tasks = Tasks::try_from(data)?;
-    action.execute(
-        path,
-        tasks,
-    )?;
+    action.execute(path, tasks)?;
     Ok(())
 }
 
