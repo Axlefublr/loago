@@ -57,7 +57,7 @@ Commands:
 
   view    [aliases: list, look, see]
           View all (default) or specified tasks, with how many days
-          ago you last did them
+          (and optionally, hours and minutes) ago you last did them
 
   remove  [aliases: delete]
           Remove specified tasks from the list

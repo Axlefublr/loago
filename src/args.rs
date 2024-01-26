@@ -9,6 +9,7 @@ use clap::Subcommand;
 use loago::Tasks;
 
 const HOURS_IN_DAY: i64 = 24;
+const MINUTES_IN_HOUR: i64 = 60;
 
 #[derive(Parser)]
 #[command(author, version, about)]
@@ -26,15 +27,17 @@ pub enum Action {
     #[command(visible_alias = "update")]
     #[command(visible_alias = "reset")]
     Do { tasks: Vec<String> },
-    /// View all (default) or specified tasks, with how many days ago you last
-    /// did them.
+    /// View all (default) or specified tasks, with how many days (and
+    /// optionally, hours and minutes) ago you last did them.
     #[command(visible_alias = "list")]
     #[command(visible_alias = "look")]
     #[command(visible_alias = "see")]
     View {
-        #[arg(short = 'r', long)]
-        hour:  bool,
-        tasks: Option<Vec<String>>,
+        /// Show hours and minutes too, in this format: `{days}d {hours}h
+        /// {minutes}m`
+        #[arg(short, long)]
+        minutes: bool,
+        tasks:   Option<Vec<String>>,
     },
     /// Remove specified tasks from the list.
     #[command(visible_alias = "delete")]
@@ -56,17 +59,26 @@ impl Action {
                 tasks.remove_multiple(&provided);
                 save(tasks, path)
             },
-            Self::View { hour, tasks: provided } => {
+            Self::View {
+                minutes,
+                tasks: provided,
+            } => {
                 if let Some(provided) = provided {
                     tasks.keep_multiple(provided);
                 }
-                if hour {
-                    print!("{}", tasks.output(|timestamp| {
-                        let days = timestamp.num_days();
-                        let total_hours = timestamp.num_hours();
-                        let hours = total_hours - (days * HOURS_IN_DAY);
-                        format!("{days}d {hours}h")
-                    }))
+                if minutes {
+                    print!(
+                        "{}",
+                        tasks.output(|timestamp| {
+                            let days = timestamp.num_days();
+                            let total_hours = timestamp.num_hours();
+                            let total_minutes = timestamp.num_minutes();
+                            let hours = total_hours - (days * HOURS_IN_DAY);
+                            let minutes =
+                                total_minutes - (total_hours * MINUTES_IN_HOUR);
+                            format!("{days}d {hours}h {minutes}m")
+                        })
+                    )
                 } else {
                     print!("{}", tasks.output_days());
                 }
