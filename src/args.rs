@@ -8,6 +8,8 @@ use clap::Parser;
 use clap::Subcommand;
 use loago::Tasks;
 
+const HOURS_IN_DAY: i64 = 24;
+
 #[derive(Parser)]
 #[command(author, version, about)]
 pub struct Args {
@@ -29,7 +31,11 @@ pub enum Action {
     #[command(visible_alias = "list")]
     #[command(visible_alias = "look")]
     #[command(visible_alias = "see")]
-    View { tasks: Option<Vec<String>> },
+    View {
+        #[arg(short = 'r', long)]
+        hour:  bool,
+        tasks: Option<Vec<String>>,
+    },
     /// Remove specified tasks from the list.
     #[command(visible_alias = "delete")]
     Remove { tasks: Vec<String> },
@@ -50,11 +56,20 @@ impl Action {
                 tasks.remove_multiple(&provided);
                 save(tasks, path)
             },
-            Self::View { tasks: provided } => {
+            Self::View { hour, tasks: provided } => {
                 if let Some(provided) = provided {
                     tasks.keep_multiple(provided);
                 }
-                print!("{}", tasks.output_days());
+                if hour {
+                    print!("{}", tasks.output(|timestamp| {
+                        let days = timestamp.num_days();
+                        let total_hours = timestamp.num_hours();
+                        let hours = total_hours - (days * HOURS_IN_DAY);
+                        format!("{days}d {hours}h")
+                    }))
+                } else {
+                    print!("{}", tasks.output_days());
+                }
                 Ok(())
             },
         }
