@@ -37,6 +37,9 @@ pub enum Action {
         /// {minutes}m`
         #[arg(short, long)]
         minutes: bool,
+        /// Don't display these provided tasks.
+        #[arg(short, long)]
+        except:  Option<Vec<String>>,
         tasks:   Option<Vec<String>>,
     },
     /// Remove specified tasks from the list.
@@ -61,10 +64,14 @@ impl Action {
             },
             Self::View {
                 minutes,
+                except,
                 tasks: provided,
             } => {
                 if let Some(provided) = provided {
                     tasks.keep_multiple(provided);
+                }
+                if let Some(excluded) = except {
+                    tasks.remove_multiple(&excluded);
                 }
                 if minutes {
                     print!(
