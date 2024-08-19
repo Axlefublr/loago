@@ -81,4 +81,13 @@ cargo install loago
 
 ```
 cargo uninstall loago
+rm -fr ~/.local/share/loago
 ```
+
+The location of the config directory that we're deleting there is:
+
+|OS     |Location                                           |
+|-------|---------------------------------------------------|
+|Linux  |`~/.local/share/loago`                             |
+|Windows|`C:\Users\username\AppData\Local\loago`            |
+|MacOS  |`/Users/username/Library/Application Support/loago`|
