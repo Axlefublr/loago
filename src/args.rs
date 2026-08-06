@@ -1,9 +1,9 @@
 use std::collections::HashMap;
-use std::error::Error;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
 
+use anyhow::Result;
 use clap::Parser;
 use clap::Subcommand;
 use loago::Tasks;
@@ -39,8 +39,8 @@ pub enum Action {
         minutes: bool,
         /// Don't display these provided tasks.
         #[arg(short, long)]
-        except:  Option<Vec<String>>,
-        tasks:   Option<Vec<String>>,
+        except: Option<Vec<String>>,
+        tasks: Option<Vec<String>>,
     },
     /// Remove specified tasks from the list.
     #[command(visible_alias = "delete")]
@@ -48,11 +48,7 @@ pub enum Action {
 }
 
 impl Action {
-    pub fn execute(
-        self,
-        path: impl AsRef<Path>,
-        mut tasks: Tasks,
-    ) -> Result<(), Box<dyn Error>> {
+    pub fn execute(self, path: impl AsRef<Path>, mut tasks: Tasks) -> Result<()> {
         match self {
             Self::Do { tasks: provided } => {
                 tasks.update_multiple(provided);
@@ -81,8 +77,7 @@ impl Action {
                             let total_hours = timestamp.num_hours();
                             let total_minutes = timestamp.num_minutes();
                             let hours = total_hours - (days * HOURS_IN_DAY);
-                            let minutes =
-                                total_minutes - (total_hours * MINUTES_IN_HOUR);
+                            let minutes = total_minutes - (total_hours * MINUTES_IN_HOUR);
                             format!("{days}d {hours}h {minutes}m")
                         })
                     )
@@ -95,11 +90,13 @@ impl Action {
     }
 }
 
-fn save(tasks: Tasks, path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
+fn save(tasks: Tasks, path: impl AsRef<Path>) -> Result<()> {
     let map: HashMap<String, String> = tasks.into();
     let json = serde_json::to_string_pretty(&map)?;
-    let mut data_file =
-        OpenOptions::new().write(true).truncate(true).open(path)?;
+    let mut data_file = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open(path)?;
     data_file.write_all(json.as_bytes())?;
     Ok(())
 }
