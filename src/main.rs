@@ -17,17 +17,20 @@ mod args;
 
 const APP_NAME: &str = "loago";
 const DATA_FILE_NAME: &str = "loago.json";
-const EMPTY_JSON_FILE_CONTENT: &[u8; 2] = b"{}";
+const EMPTY_JSON_FILE_CONTENT: &str = "{}";
 
 fn main() -> Result<()> {
     let Args { action } = Args::parse();
     let data_dir = app_data_dir()?;
-    fs::create_dir_all(&data_dir)?;
-    let path = ensure_exists(data_dir, DATA_FILE_NAME)?;
-    let contents = read(&path)?;
-    let data: IndexMap<String, String> = serde_json::from_str(&contents)?;
-    let tasks = Tasks::try_from(data)?;
-    action.execute_tasks(path, tasks)?;
+    let task_path = data_dir.join(DATA_FILE_NAME);
+    let task_contents = read(&task_path)?.unwrap_or_else(|| String::from(EMPTY_JSON_FILE_CONTENT));
+    let task_data: IndexMap<String, String> = serde_json::from_str(&task_contents)?;
+    let tasks = Tasks::try_from(task_data)?;
+    let new_tasks = action.execute(tasks.clone())?;
+    if tasks != new_tasks {
+        fs::create_dir_all(&data_dir)?;
+        save_tasks(task_path, new_tasks)?;
+    }
     Ok(())
 }
 
@@ -37,33 +40,29 @@ fn app_data_dir() -> Result<PathBuf> {
         .join(APP_NAME))
 }
 
-fn ensure_exists(data_dir: PathBuf, data_file: impl AsRef<Path>) -> Result<PathBuf, io::Error> {
-    let full_path = data_dir.join(data_file);
-    match OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(&full_path)
-    {
-        Ok(mut file) => {
-            file.write_all(EMPTY_JSON_FILE_CONTENT)?;
-            file.flush()?;
-        },
-        Err(error) => {
-            use std::io::ErrorKind::*;
-            if let AlreadyExists = error.kind() {
-            } else {
-                return Err(error);
-            }
-        },
-    };
-    Ok(full_path)
-}
-
-fn read(path: &Path) -> Result<String, io::Error> {
-    let mut file = OpenOptions::new()
+fn read(path: &Path) -> Result<Option<String>, io::Error> {
+    use std::io::ErrorKind::*;
+    let mut file = match OpenOptions::new()
         .read(true)
-        .open(path)?;
+        .open(path)
+    {
+        Ok(file) => file,
+        Err(err) if err.kind() == NotFound => return Ok(None),
+        Err(err) => return Err(err),
+    };
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-    Ok(contents)
+    Ok(Some(contents))
+}
+
+fn save_tasks(path: impl AsRef<Path>, tasks: Tasks) -> Result<()> {
+    let map: IndexMap<String, String> = tasks.into();
+    let json = serde_json::to_string_pretty(&map)?;
+    let mut data_file = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .create(true)
+        .open(path)?;
+    data_file.write_all(json.as_bytes())?;
+    Ok(())
 }

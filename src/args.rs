@@ -1,11 +1,6 @@
-use std::fs::OpenOptions;
-use std::io::Write;
-use std::path::Path;
-
 use anyhow::Result;
 use clap::Parser;
 use clap::Subcommand;
-use indexmap::IndexMap;
 use loago::Tasks;
 
 const HOURS_IN_DAY: i64 = 24;
@@ -48,15 +43,13 @@ pub enum Action {
 }
 
 impl Action {
-    pub fn execute(self, path: impl AsRef<Path>, mut tasks: Tasks) -> Result<()> {
+    pub fn execute(self, mut tasks: Tasks) -> Result<Tasks> {
         match self {
             Self::Do { tasks: provided } => {
                 tasks.update_multiple(provided);
-                save(tasks, path)
             },
             Self::Remove { tasks: provided } => {
                 tasks.remove_multiple(&provided);
-                save(tasks, path)
             },
             Self::View {
                 minutes,
@@ -84,19 +77,8 @@ impl Action {
                 } else {
                     print!("{}", tasks.output_days());
                 }
-                Ok(())
             },
         }
+        Ok(tasks)
     }
-}
-
-fn save(tasks: Tasks, path: impl AsRef<Path>) -> Result<()> {
-    let map: IndexMap<String, String> = tasks.into();
-    let json = serde_json::to_string_pretty(&map)?;
-    let mut data_file = OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .open(path)?;
-    data_file.write_all(json.as_bytes())?;
-    Ok(())
 }

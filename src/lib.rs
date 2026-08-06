@@ -5,6 +5,7 @@ use chrono::NaiveDateTime;
 use chrono::Utc;
 use indexmap::IndexMap;
 
+#[derive(Clone, PartialEq)]
 pub struct Tasks(IndexMap<String, NaiveDateTime>);
 
 impl From<IndexMap<String, NaiveDateTime>> for Tasks {
@@ -80,26 +81,26 @@ impl Tasks {
         self.0 = map;
     }
 
-    pub fn output_days(self) -> OutputTasks {
+    pub fn output_days(&self) -> OutputTasks {
         self.output(|duration| duration.num_days().to_string())
     }
 
-    pub fn output<F>(self, to_string: F) -> OutputTasks
+    pub fn output<F>(&self, to_string: F) -> OutputTasks
     where
         F: Fn(Duration) -> String,
     {
         self.output_when(now(), to_string)
     }
 
-    pub fn output_when<F>(self, now: NaiveDateTime, to_string: F) -> OutputTasks
+    pub fn output_when<F>(&self, now: NaiveDateTime, to_string: F) -> OutputTasks
     where
         F: Fn(Duration) -> String,
     {
         type KeyToDuration = (String, Duration);
         let mut output: Vec<KeyToDuration> = self
             .0
-            .into_iter()
-            .map(|(key, timestamp)| (key, now - timestamp))
+            .iter()
+            .map(|(key, timestamp)| (key.to_owned(), now - *timestamp))
             .collect();
         output.sort_by_key(|(_, diff_days)| *diff_days);
         let output: Vec<KeyToDisplay> = output
