@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
@@ -6,6 +5,7 @@ use std::path::Path;
 use anyhow::Result;
 use clap::Parser;
 use clap::Subcommand;
+use indexmap::IndexMap;
 use loago::Tasks;
 
 const HOURS_IN_DAY: i64 = 24;
@@ -91,7 +91,7 @@ impl Action {
 }
 
 fn save(tasks: Tasks, path: impl AsRef<Path>) -> Result<()> {
-    let map: HashMap<String, String> = tasks.into();
+    let map: IndexMap<String, String> = tasks.into();
     let json = serde_json::to_string_pretty(&map)?;
     let mut data_file = OpenOptions::new()
         .write(true)

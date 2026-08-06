@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io;
@@ -11,6 +10,7 @@ use anyhow::anyhow;
 use anyhow::Result;
 use args::Args;
 use clap::Parser;
+use indexmap::IndexMap;
 use loago::Tasks;
 
 mod args;
@@ -25,9 +25,9 @@ fn main() -> Result<()> {
     fs::create_dir_all(&data_dir)?;
     let path = ensure_exists(data_dir, DATA_FILE_NAME)?;
     let contents = read(&path)?;
-    let data: HashMap<String, String> = serde_json::from_str(&contents)?;
+    let data: IndexMap<String, String> = serde_json::from_str(&contents)?;
     let tasks = Tasks::try_from(data)?;
-    action.execute(path, tasks)?;
+    action.execute_tasks(path, tasks)?;
     Ok(())
 }
 

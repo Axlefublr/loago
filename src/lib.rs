@@ -1,23 +1,23 @@
-use std::collections::HashMap;
 use std::fmt;
 
 use chrono::Duration;
 use chrono::NaiveDateTime;
 use chrono::Utc;
+use indexmap::IndexMap;
 
-pub struct Tasks(HashMap<String, NaiveDateTime>);
+pub struct Tasks(IndexMap<String, NaiveDateTime>);
 
-impl From<HashMap<String, NaiveDateTime>> for Tasks {
-    fn from(value: HashMap<String, NaiveDateTime>) -> Self {
+impl From<IndexMap<String, NaiveDateTime>> for Tasks {
+    fn from(value: IndexMap<String, NaiveDateTime>) -> Self {
         Self(value)
     }
 }
 
-impl TryFrom<HashMap<String, String>> for Tasks {
+impl TryFrom<IndexMap<String, String>> for Tasks {
     type Error = chrono::format::ParseError;
 
-    fn try_from(value: HashMap<String, String>) -> Result<Self, Self::Error> {
-        let mut map = HashMap::new();
+    fn try_from(value: IndexMap<String, String>) -> Result<Self, Self::Error> {
+        let mut map = IndexMap::new();
         for (key, timestamp) in value {
             let timestamp = timestamp.parse()?;
             map.insert(key, timestamp);
@@ -26,7 +26,7 @@ impl TryFrom<HashMap<String, String>> for Tasks {
     }
 }
 
-impl From<Tasks> for HashMap<String, String> {
+impl From<Tasks> for IndexMap<String, String> {
     fn from(value: Tasks) -> Self {
         value
             .0
@@ -49,18 +49,18 @@ impl Tasks {
     }
 
     pub fn remove(&mut self, task: &str) {
-        self.0.remove(task);
+        self.0.shift_remove(task);
     }
 
     pub fn remove_multiple(&mut self, tasks: &[impl AsRef<str>]) {
         for task in tasks {
-            self.0.remove(task.as_ref());
+            self.0.shift_remove(task.as_ref());
         }
     }
 
     pub fn keep(&mut self, task: impl Into<String>) {
         let task = task.into();
-        let mut map = HashMap::new();
+        let mut map = IndexMap::new();
         if self.0.contains_key(&task) {
             let timestamp = self.0[&task];
             map.insert(task, timestamp);
@@ -69,7 +69,7 @@ impl Tasks {
     }
 
     pub fn keep_multiple(&mut self, tasks: impl IntoIterator<Item = impl Into<String>>) {
-        let mut map = HashMap::new();
+        let mut map = IndexMap::new();
         for task in tasks {
             let task = task.into();
             if self.0.contains_key(&task) {
@@ -146,7 +146,7 @@ impl fmt::Display for OutputTasks {
 
 #[cfg(test)]
 mod tasks {
-    use std::collections::HashMap;
+    use std::collections::IndexMap;
 
     use chrono::NaiveDate;
     use chrono::NaiveDateTime;
@@ -156,7 +156,7 @@ mod tasks {
 
     impl Tasks {
         fn same_days() -> Self {
-            let mut map = HashMap::new();
+            let mut map = IndexMap::new();
             let december = december();
             map.insert(String::from("dust"), december);
             map.insert(String::from("vacuum"), december);
@@ -165,7 +165,7 @@ mod tasks {
         }
 
         fn different_days() -> Self {
-            let mut map = HashMap::new();
+            let mut map = IndexMap::new();
             map.insert(String::from("dust"), november(1));
             map.insert(String::from("vacuum"), november(2));
             map.insert(String::from("exercise"), november(3));
