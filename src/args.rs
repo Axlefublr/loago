@@ -1,3 +1,5 @@
+use std::ops::Not;
+
 use anyhow::Result;
 use clap::Parser;
 use clap::Subcommand;
@@ -21,7 +23,10 @@ pub enum Action {
     #[command(visible_alias = "new")]
     #[command(visible_alias = "update")]
     #[command(visible_alias = "reset")]
-    Do { tasks: Vec<String> },
+    Do {
+        #[arg(required = true)]
+        tasks: Vec<String>,
+    },
     /// View all (default) or specified tasks, with how many days (and
     /// optionally, hours and minutes) ago you last did them.
     #[command(visible_alias = "list")]
@@ -34,12 +39,15 @@ pub enum Action {
         minutes: bool,
         /// Don't display these provided tasks.
         #[arg(short, long)]
-        except: Option<Vec<String>>,
-        tasks: Option<Vec<String>>,
+        except: Vec<String>,
+        tasks: Vec<String>,
     },
     /// Remove specified tasks from the list.
     #[command(visible_alias = "delete")]
-    Remove { tasks: Vec<String> },
+    Remove {
+        #[arg(required = true)]
+        tasks: Vec<String>,
+    },
 }
 
 impl Action {
@@ -56,17 +64,17 @@ impl Action {
                 except,
                 tasks: provided,
             } => {
-                let mut tasks = tasks.clone();
-                if let Some(provided) = provided {
-                    tasks.keep_multiple(provided);
+                let mut ephemeral_tasks = tasks.clone();
+                if provided.is_empty().not() {
+                    ephemeral_tasks.keep_multiple(provided);
                 }
-                if let Some(excluded) = except {
-                    tasks.remove_multiple(&excluded);
+                if except.is_empty().not() {
+                    ephemeral_tasks.remove_multiple(&except);
                 }
                 if minutes {
                     print!(
                         "{}",
-                        tasks.output(|timestamp| {
+                        ephemeral_tasks.output(|timestamp| {
                             let days = timestamp.num_days();
                             let total_hours = timestamp.num_hours();
                             let total_minutes = timestamp.num_minutes();
@@ -76,7 +84,7 @@ impl Action {
                         })
                     )
                 } else {
-                    print!("{}", tasks.output_days());
+                    print!("{}", ephemeral_tasks.output_days());
                 }
             },
         }
