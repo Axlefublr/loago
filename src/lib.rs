@@ -147,8 +147,6 @@ impl fmt::Display for OutputTasks {
 
 #[cfg(test)]
 mod tasks {
-    use std::collections::IndexMap;
-
     use chrono::NaiveDate;
     use chrono::NaiveDateTime;
 
