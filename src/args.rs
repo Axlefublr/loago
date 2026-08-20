@@ -27,8 +27,8 @@ pub enum Action {
         #[arg(required = true)]
         tasks: Vec<String>,
     },
-    /// View all (default) or specified tasks, with how many days (and
-    /// optionally, hours and minutes) ago you last did them.
+    /// View all (default) or specified tasks (if provided),
+    /// with how many days (and optionally, hours and minutes) ago you last did them.
     #[command(visible_alias = "list")]
     #[command(visible_alias = "look")]
     #[command(visible_alias = "see")]
