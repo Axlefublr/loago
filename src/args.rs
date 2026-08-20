@@ -56,6 +56,7 @@ impl Action {
                 except,
                 tasks: provided,
             } => {
+                let mut tasks = tasks.clone();
                 if let Some(provided) = provided {
                     tasks.keep_multiple(provided);
                 }
