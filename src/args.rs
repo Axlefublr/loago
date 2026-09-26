@@ -23,6 +23,11 @@ pub enum Action {
     #[command(visible_alias = "new")]
     #[command(visible_alias = "update")]
     #[command(visible_alias = "reset")]
+    #[command(visible_alias = "done")]
+    #[command(visible_alias = "did")]
+    #[command(visible_alias = "complete")]
+    #[command(visible_alias = "completed")]
+    #[command(visible_alias = "bump")]
     Do {
         #[arg(required = true)]
         tasks: Vec<String>,
@@ -32,6 +37,8 @@ pub enum Action {
     #[command(visible_alias = "list")]
     #[command(visible_alias = "look")]
     #[command(visible_alias = "see")]
+    #[command(visible_alias = "show")]
+    #[command(visible_alias = "when")]
     View {
         /// Show hours and minutes too, in this format: `{days}d {hours}h
         /// {minutes}m`
