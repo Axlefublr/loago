@@ -112,6 +112,12 @@ cargo install loago
 
 `cargo-quickinstall` and `cargo-binstall` are also supported.
 
+### AUR
+
+- [`loago`](https://aur.archlinux.org/packages/loago) for tagged releases.
+- [`loago-git`](https://aur.archlinux.org/packages/loago-git) for the lastest git.
+- [`loago-bin`](https://aur.archlinux.org/packages/loago-bin) for binary builds.
+
 ## Uninstall
 
 ```
