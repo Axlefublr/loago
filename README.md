@@ -52,11 +52,13 @@ Usage: loago <COMMAND>
 
 Commands:
   do      Update tasks' dates to now. Creates tasks that didn't
-              exist before [aliases: add, new, update, reset]
+              exist before [aliases: add, new, update, reset, done, did,
+              complete, completed, bump]
   view    View all (default) or specified tasks (if provided), with
               how many days (and optionally, hours and minutes) ago you
-              last did them [aliases: list, look, see]
-  remove  Remove specified tasks from the list [aliases: delete]
+              last did them [aliases: list, look, see, show, ls]
+  remove  Remove specified tasks from the list [aliases: delete,
+              del, rm]
   help    Print this message or the help of the given subcommand(s)
 
 Options:
@@ -106,7 +108,7 @@ Options:
 
 ## Install
 
-```
+```sh
 cargo install loago
 ```
 
@@ -120,7 +122,7 @@ cargo install loago
 
 ## Uninstall
 
-```
+```sh
 cargo uninstall loago
 rm -fr ~/.local/share/loago
 ```
